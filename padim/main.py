@@ -15,7 +15,6 @@ from skimage import morphology
 from skimage.segmentation import mark_boundaries
 import matplotlib.pyplot as plt
 import matplotlib
-
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -28,21 +27,14 @@ use_cuda = torch.cuda.is_available()
 device = torch.device('cuda' if use_cuda else 'cpu')
 
 
-def parse_args():
-    parser = argparse.ArgumentParser('PaDiM')
-    parser.add_argument('--data_path', type=str, default='D:/dataset/mvtec_anomaly_detection')
-    parser.add_argument('--save_path', type=str, default='./mvtec_result')
-    parser.add_argument('--arch', type=str, choices=['resnet18', 'wide_resnet50_2'], default='wide_resnet50_2')
-    return parser.parse_args()
 
 
-def main():
+def main(args):
 
-    args = parse_args()
-
-    # load model
+    print(f' step 1. model loading')
     if args.arch == 'resnet18':
-        model = resnet18(pretrained=True, progress=True)
+        model = resnet18(pretrained=True,
+                         progress=True)
         t_d = 448
         d = 100
     elif args.arch == 'wide_resnet50_2':
@@ -56,7 +48,10 @@ def main():
     if use_cuda:
         torch.cuda.manual_seed_all(1024)
 
+    print(f' step 2. feature dim reduction')
+    print(f' from 0 to {t_d}, {d} number of dimensions are randomly selected')
     idx = torch.tensor(sample(range(0, t_d), d))
+
 
     # set model's intermediate outputs
     outputs = []
@@ -298,4 +293,10 @@ def embedding_concat(x, y):
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser('PaDiM')
+    parser.add_argument('--data_path', type=str, default='D:/dataset/mvtec_anomaly_detection')
+    parser.add_argument('--save_path', type=str, default='./mvtec_result')
+    parser.add_argument('--arch', type=str, choices=['resnet18', 'wide_resnet50_2'], default='wide_resnet50_2')
+    args = parser.parse_args()
+    main(args)
+    main(args)
