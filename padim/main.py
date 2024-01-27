@@ -103,7 +103,8 @@ def main(args):
             embedding_vectors = embedding_vectors.view(B, C, H * W)
             print(f'all normal embedding_vectors : {embedding_vectors.shape}')
             print(f' - calculate multivariate Gaussian distribution')
-            mean = torch.mean(embedding_vectors, dim=0).numpy()
+            print(f' before embedding_vectors : {embedding_vectors.shape}')
+            mean = torch.mean(embedding_vectors, dim=0).numpy() # [100 dim, 3136],
             print(f' (1) mean = {mean.shape}')
             cov = torch.zeros(C, C, H * W).numpy()
             I = np.identity(C)
