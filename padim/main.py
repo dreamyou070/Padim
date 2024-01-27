@@ -27,8 +27,6 @@ use_cuda = torch.cuda.is_available()
 device = torch.device('cuda' if use_cuda else 'cpu')
 
 
-
-
 def main(args):
 
     print(f' step 1. model loading')
@@ -51,8 +49,6 @@ def main(args):
     print(f' step 2. feature dim reduction')
     print(f' from 0 to {t_d}, {d} number of dimensions are randomly selected')
     idx = torch.tensor(sample(range(0, t_d), d))
-
-
     # set model's intermediate outputs
     outputs = []
 
@@ -95,7 +91,6 @@ def main(args):
                 outputs = []
             for k, v in train_outputs.items():
                 """ layer 1, 2, 3 concat"""
-                print(f'before concat, features : {v.shape}')
                 train_outputs[k] = torch.cat(v, 0)
             # Embedding concat
             embedding_vectors = train_outputs['layer1']
@@ -108,15 +103,15 @@ def main(args):
             embedding_vectors = embedding_vectors.view(B, C, H * W)
             print(f'all normal embedding_vectors : {embedding_vectors.shape}')
             print(f' - calculate multivariate Gaussian distribution')
-            print(f' (1) mean')
             mean = torch.mean(embedding_vectors, dim=0).numpy()
-            print(f' (2) covariance')
+            print(f' (1) mean = {mean.shape}')
             cov = torch.zeros(C, C, H * W).numpy()
             I = np.identity(C)
             for i in range(H * W):
                 # cov[:, :, i] = LedoitWolf().fit(embedding_vectors[:, :, i].numpy()).covariance_
                 covariance = np.cov(embedding_vectors[:, :, i].numpy(), rowvar=False) + 0.01 * I
                 cov[:, :, i] = covariance
+            print(f' (2) covariance : {cov.shape}')
             # save learned distribution
             train_outputs = [mean, cov]
             with open(train_feature_filepath, 'wb') as f:
@@ -153,7 +148,7 @@ def main(args):
 
         # randomly select d dimension
         embedding_vectors = torch.index_select(embedding_vectors, 1, idx)
-        
+        print(f'test embedding vector shape : {embedding_vectors.shape}')
         # calculate distance matrix
         B, C, H, W = embedding_vectors.size()
         embedding_vectors = embedding_vectors.view(B, C, H * W).numpy()
