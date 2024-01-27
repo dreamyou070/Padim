@@ -101,18 +101,13 @@ def main(args):
             embedding_vectors = torch.index_select(embedding_vectors, 1, idx)
             B, C, H, W = embedding_vectors.size()
             embedding_vectors = embedding_vectors.view(B, C, H * W)
-            print(f'all normal embedding_vectors : {embedding_vectors.shape}')
-            print(f' - calculate multivariate Gaussian distribution')
-            print(f' before embedding_vectors : {embedding_vectors.shape}')
             mean = torch.mean(embedding_vectors, dim=0).numpy() # [100 dim, 3136],
-            print(f' (1) mean = {mean.shape}')
             cov = torch.zeros(C, C, H * W).numpy()
             I = np.identity(C)
             for i in range(H * W):
                 # cov[:, :, i] = LedoitWolf().fit(embedding_vectors[:, :, i].numpy()).covariance_
                 covariance = np.cov(embedding_vectors[:, :, i].numpy(), rowvar=False) + 0.01 * I
                 cov[:, :, i] = covariance
-            print(f' (2) covariance : {cov.shape}')
             # save learned distribution
             train_outputs = [mean, cov]
             with open(train_feature_filepath, 'wb') as f:
@@ -148,15 +143,19 @@ def main(args):
             embedding_vectors = embedding_concat(embedding_vectors, test_outputs[layer_name])
 
         # randomly select d dimension
-        embedding_vectors = torch.index_select(embedding_vectors, 1, idx)
-        print(f'test embedding vector shape : {embedding_vectors.shape}')
+        embedding_vectors = torch.index_select(embedding_vectors, 1, idx) # sample num, dim, H, W
         # calculate distance matrix
         B, C, H, W = embedding_vectors.size()
-        embedding_vectors = embedding_vectors.view(B, C, H * W).numpy()
+        embedding_vectors = embedding_vectors.view(B, C, H * W).numpy()   # sample num, dim, H*W
         dist_list = []
         for i in range(H * W):
-            mean = train_outputs[0][:, i]
-            conv_inv = np.linalg.inv(train_outputs[1][:, :, i])
+            mean = train_outputs[0][:, i]                                 # dim, pix_num
+            conv_inv = np.linalg.inv(train_outputs[1][:, :, i])           # dim, dim, pix_num
+            print(f' - mean shape: {mean.shape}, conv_inv shape: {conv_inv.shape}')
+            for sample in embedding_vectors:
+                print(f'sample : {sample.shape}')
+                dist = mahalanobis(sample[:, i], mean, conv_inv)
+                print(f'mahalanobis dist : {dist.shape}')
             dist = [mahalanobis(sample[:, i], mean, conv_inv) for sample in embedding_vectors]
             dist_list.append(dist)
 
