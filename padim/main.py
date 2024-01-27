@@ -72,7 +72,7 @@ def main(args):
     total_pixel_roc_auc = []
 
     for class_name in mvtec.CLASS_NAMES:
-
+        print (f' - {class_name} dataset construction')
         train_dataset = mvtec.MVTecDataset(args.data_path, class_name=class_name, is_train=True)
         train_dataloader = DataLoader(train_dataset, batch_size=32, pin_memory=True)
         test_dataset = mvtec.MVTecDataset(args.data_path, class_name=class_name, is_train=False)
@@ -81,7 +81,7 @@ def main(args):
         train_outputs = OrderedDict([('layer1', []), ('layer2', []), ('layer3', [])])
         test_outputs = OrderedDict([('layer1', []), ('layer2', []), ('layer3', [])])
 
-        # extract train set features
+        print(f' - extract train set features')
         train_feature_filepath = os.path.join(args.save_path, 'temp_%s' % args.arch, 'train_%s.pkl' % class_name)
         if not os.path.exists(train_feature_filepath):
             for (x, _, _) in tqdm(train_dataloader, '| feature extraction | train | %s |' % class_name):
@@ -94,8 +94,9 @@ def main(args):
                 # initialize hook outputs
                 outputs = []
             for k, v in train_outputs.items():
+                """ layer 1, 2, 3 concat"""
+                print(f'before concat, features : {v.shape}')
                 train_outputs[k] = torch.cat(v, 0)
-
             # Embedding concat
             embedding_vectors = train_outputs['layer1']
             for layer_name in ['layer2', 'layer3']:
@@ -103,15 +104,19 @@ def main(args):
 
             # randomly select d dimension
             embedding_vectors = torch.index_select(embedding_vectors, 1, idx)
-            # calculate multivariate Gaussian distribution
             B, C, H, W = embedding_vectors.size()
             embedding_vectors = embedding_vectors.view(B, C, H * W)
+            print(f'all normal embedding_vectors : {embedding_vectors.shape}')
+            print(f' - calculate multivariate Gaussian distribution')
+            print(f' (1) mean')
             mean = torch.mean(embedding_vectors, dim=0).numpy()
+            print(f' (2) covariance')
             cov = torch.zeros(C, C, H * W).numpy()
             I = np.identity(C)
             for i in range(H * W):
                 # cov[:, :, i] = LedoitWolf().fit(embedding_vectors[:, :, i].numpy()).covariance_
-                cov[:, :, i] = np.cov(embedding_vectors[:, :, i].numpy(), rowvar=False) + 0.01 * I
+                covariance = np.cov(embedding_vectors[:, :, i].numpy(), rowvar=False) + 0.01 * I
+                cov[:, :, i] = covariance
             # save learned distribution
             train_outputs = [mean, cov]
             with open(train_feature_filepath, 'wb') as f:
