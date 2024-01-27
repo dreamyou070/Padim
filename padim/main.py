@@ -1,5 +1,5 @@
 import random
-from random import sample
+
 import argparse
 import numpy as np
 import os
@@ -48,6 +48,7 @@ def main(args):
 
     print(f' step 2. feature dim reduction')
     print(f' from 0 to {t_d}, {d} number of dimensions are randomly selected')
+    from random import sample
     idx = torch.tensor(sample(range(0, t_d), d))
     # set model's intermediate outputs
     outputs = []
