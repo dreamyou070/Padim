@@ -12,13 +12,9 @@ print(f'mean: {mean}')
 print(f'covariance: {covariance}')
 # calculate distance matrix
 
-test_embedding_vectors = torch.randn((3,4))
-B, C = test_embedding_vectors.size()
-embedding_vectors = test_embedding_vectors.numpy()
+sample = torch.randn(4)
+dist = mahalanobis(sample, mean, covariance)
 
-dist_list = []
-
-dist = [mahalanobis(sample, mean, covariance) for sample in embedding_vectors]
-dist_list.append(dist)
-
-dist_list = np.array(dist_list).transpose(1, 0).reshape(B, H, W)
+print(f'dist : {dist}')
+d = torch.tensor(dist)
+print(f'd : {d}')

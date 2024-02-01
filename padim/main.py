@@ -92,17 +92,23 @@ def main(args):
                 outputs = []
             for k, v in train_outputs.items():
                 """ layer 1, 2, 3 concat"""
+                print(f' {k} : {v.shape}')
                 train_outputs[k] = torch.cat(v, 0)
             # Embedding concat
             embedding_vectors = train_outputs['layer1']
+            print(f'layer1 : {embedding_vectors.shape}')
             for layer_name in ['layer2', 'layer3']:
+                e = train_outputs[layer_name]
+                print(f'{layer_name} : {e.shape}')
                 embedding_vectors = embedding_concat(embedding_vectors, train_outputs[layer_name])
 
             # randomly select d dimension
             embedding_vectors = torch.index_select(embedding_vectors, 1, idx)
+            print(f'final embedding_vectors : {embedding_vectors.shape}')
             B, C, H, W = embedding_vectors.size()
             embedding_vectors = embedding_vectors.view(B, C, H * W)
             mean = torch.mean(embedding_vectors, dim=0).numpy() # [100 dim, 3136],
+            print(f'mean (C,H, W) : {mean.shape}')
             cov = torch.zeros(C, C, H * W).numpy()
             I = np.identity(C)
             for i in range(H * W):
@@ -154,6 +160,7 @@ def main(args):
             conv_inv = np.linalg.inv(train_outputs[1][:, :, i])           # dim, dim, pix_num
             print(f' - mean shape: {mean.shape}, conv_inv shape: {conv_inv.shape}')
             for sample in embedding_vectors:
+                # sample = [dim, pix_num]
                 print(f'sample : {sample.shape}')
                 dist = mahalanobis(sample[:, i], mean, conv_inv)
                 print(f'mahalanobis dist : {dist.shape}')
