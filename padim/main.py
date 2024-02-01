@@ -92,8 +92,10 @@ def main(args):
                 outputs = []
             for k, v in train_outputs.items():
                 """ layer 1, 2, 3 concat"""
-                print(f' {k} : {v.shape}')
-                train_outputs[k] = torch.cat(v, 0)
+
+                feat = torch.cat(v, 0)
+                print(f' {k} : {feat.shape}')
+                train_outputs[k] = feat
             # Embedding concat
             embedding_vectors = train_outputs['layer1']
             print(f'layer1 : {embedding_vectors.shape}')
