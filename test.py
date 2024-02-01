@@ -2,19 +2,15 @@ import torch
 import numpy as np
 from scipy.spatial.distance import mahalanobis
 
-embedding_vectors = torch.randn((2,4))
-mean = torch.mean(embedding_vectors, dim=0).numpy()
-B, C = embedding_vectors.size()
-covariance = np.cov(embedding_vectors.numpy(), rowvar=False)
+dist_list = []
 
-print(f'embedding_vectors: {embedding_vectors}')
-print(f'mean: {mean}')
-print(f'covariance: {covariance}')
-# calculate distance matrix
+dist = 1
+H,W = 2,2
+B = 3
 
-sample = torch.randn(4)
-dist = mahalanobis(sample, mean, covariance)
+dist_list= [1,1,1,1,1,1,1,1,1,1,1,1]
+d = np.array(dist_list)#.transpose(1, 0) # [1,12
+d = d.transpose(1, 0)
+print(d)
+#dist_list = d.reshape(B, H, W)
 
-print(f'dist : {dist}')
-d = torch.tensor(dist)
-print(f'd : {d}')
